@@ -19,60 +19,96 @@
 <script>
 var black = true;
 var white = false;
+
+var xRow = 15;
+var yRow = 15;
+
+var map = new Array(xRow);
+var memo = new Array(xRow);
+
+var dx = [ 1, 1, 0, -1 ]
+var dy = [ 0, 1, 1, 1  ]
 $(document).ready(function(){
-    
+  
     // svg 생성
     var svg = createSvg("svg")
 
-    
-    $(svg).attr("width",300)
-    $(svg).attr("height",300)
+    $(svg).attr("width",30*xRow)
+    $(svg).attr("height",30*yRow)
+    $(svg).attr("style","background-color: #FAAC58;")
 
+    $("#svgDiv").append(svg);
+ 
+    initArea()
+
+
+    
+});
+function createSvg (element){
+    return document.createElementNS("http://www.w3.org/2000/svg",element);
+}
+
+function initArea(){
     //세로줄 생성
-    for (var i = 0; i < 10; i++) {
+    
+    for (var i = 0; i < xRow; i++) {
         var line = createSvg('line')
         $(line).attr("x1" , 10+i*30)
         $(line).attr("y1" , 0)
         $(line).attr("x2" , 10+i*30)
-        $(line).attr("y2" , 310)
-        $(line).attr("style" , "stroke:rgb(255,0,0);stroke-width:2")
-        $(svg).append(line);
+        $(line).attr("y2" , 30*yRow+10)
+        $(line).attr("style" , "stroke:black;stroke-width:2")
+        $('svg').append(line);
+
+        map[i] = new Array(yRow);
+        memo[i] = new Array(yRow);
     }
 
     //가로줄 생성
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < yRow; i++) {
         var line = createSvg('line')
         $(line).attr("x1" , 0)
         $(line).attr("y1" , 10+i*30)
-        $(line).attr("x2" , 310)
+        $(line).attr("x2" , 30*xRow+10)
         $(line).attr("y2" , 10+i*30)
-        $(line).attr("style" , "stroke:rgb(255,0,0);stroke-width:2")
-        $(svg).append(line);
+        $(line).attr("style" , "stroke:black;stroke-width:2")
+        $('svg').append(line);
     }
 
-    for (var j = 0; j < 10; j++) {
-        for (var i = 0; i < 10; i++) {
+    for (var j = 1; j < yRow-1; j++) {
+        for (var i = 1; i < xRow-1; i++) {
+            //memo 배열 초기화
+            memo[i][j] = [0,0,0,0]
+
             var circle = createSvg('circle')
             $(circle).attr("cx",10+i*30)
             $(circle).attr("cy",10+j*30)
-            $(circle).attr("r",5)
+            $(circle).attr("r",10)
             $(circle).attr("fill","black")
             $(circle).attr("class","non-seleted")
             $(circle).attr("style","opacity:0;")
             $(circle).on({
                 
                 click: function () {
+                    var x = (Number($(this).attr("cx"))-10)/30
+                    var y = (Number($(this).attr("cy"))-10)/30
                     if(black){
                         $(this).attr("fill","black")
                         black = false;
                         white = true;
+                        map[x][y] = "black"
+
                     }else{
                         $(this).attr("fill","white")
                         black = true;
                         white = false;
+                        map[x][y] = "white"
                     }
+                    
                     $(this).css("opacity","1")
                     $(this).removeClass("non-seleted")
+
+                    findFive();
                 },
                 mouseover: function () {
                     if($(this).hasClass("non-seleted")){
@@ -92,16 +128,68 @@ $(document).ready(function(){
                     }
                 }
                 });
-            $(svg).append(circle);
+            $('svg').append(circle);
         }
     }
    
-   
-
-
-    $("#svgDiv").append(svg);
-});
-function createSvg (element){
-    return document.createElementNS("http://www.w3.org/2000/svg",element);
+    console.log(memo)
 }
+
+
+
+function isEmpty(val){
+    
+    var empty = true;
+
+    if(val !=  undefined && val != ""){
+        empty = false;
+    }
+    return empty
+}
+
+//find five
+function findFive (){
+   
+    var end = false;
+    for (var j = 1; j < yRow-1; j++) {
+        for (var i = 1; i < xRow-1; i++) {
+            if (!isEmpty(map[i][j])) {
+					for (var d = 0; d < 4; d++) {
+                       
+						if (memo[i][j][d] == 0 && calc(i, j, d, map[i][j]) == 5) {
+							alert( map[i][j])
+                            end = true;
+						}
+					}
+			}
+        }
+    }
+
+    if(end){
+        $('svg').empty();
+        map = new Array(xRow);
+        memo = new Array(xRow);
+        initArea()
+    }
+}
+
+function calc(x,  y, dir,color) {
+
+ 
+    var nx = x + dx[dir];
+	var ny = y + dy[dir];
+
+    console.log(nx)
+    console.log(ny)
+
+    if(nx)
+
+		if (map[nx][ny] == color) {
+            
+			memo[nx][ny][dir] = calc(nx, ny, dir, color) + 1;
+            return memo[nx][ny][dir]
+		}
+		return 1;
+}
+
 </script>
